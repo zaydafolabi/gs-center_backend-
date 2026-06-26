@@ -7,21 +7,25 @@ error_reporting(E_ALL);
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
 
-// Connect to MySQL local server (without dbname first to drop/create)
-$host = 'localhost';
-$username = 'root';
-$password = '';
+// Connect to MySQL server using env variables or defaults
+$host = getenv('DB_HOST') ?: 'localhost';
+$port = getenv('DB_PORT') ?: '3306';
+$dbname = getenv('DB_NAME') ?: 'gs_db';
+$username = getenv('DB_USER') ?: 'root';
+$password = getenv('DB_PASSWORD') ?: '';
 
 try {
-    $pdo = new PDO("mysql:host=$host;charset=utf8mb4", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // If we are on localhost, we can try to recreate the database.
+    // Otherwise (on remote like Railway), we connect directly to the existing database.
+    if ($host === 'localhost' || $host === '127.0.0.1') {
+        $pdo = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", $username, $password);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->exec("DROP DATABASE IF EXISTS `$dbname`");
+        $pdo->exec("CREATE DATABASE `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    }
     
-    // 1. Recreate the database to clear corruption errors (#1932 doesn't exist in engine)
-    $pdo->exec("DROP DATABASE IF EXISTS gs_db");
-    $pdo->exec("CREATE DATABASE gs_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-    
-    // Reconnect to the newly created database
-    $pdo = new PDO("mysql:host=$host;dbname=gs_db;charset=utf8mb4", $username, $password);
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
     // 2. Create Users Table
