@@ -6,6 +6,9 @@ RUN docker-php-ext-install pdo pdo_mysql
 # Enable Apache mod_rewrite for routing / .htaccess
 RUN a2enmod rewrite
 
+# Pass environment variables to Apache and PHP
+RUN echo "PassEnv PORT DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD" >> /etc/apache2/apache2.conf
+
 # Copy API source files to Apache public directory
 COPY ./api /var/www/html/api
 
