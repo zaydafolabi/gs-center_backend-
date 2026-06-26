@@ -15,15 +15,20 @@ $username = getenv('DB_USER') ?: 'root';
 $password = getenv('DB_PASSWORD') ?: '';
 
 try {
-    // If we are on localhost, we can try to recreate the database.
-    // Otherwise (on remote like Railway), we connect directly to the existing database.
+    // Connect to MySQL server first without selecting a database
+    $pdo = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
     if ($host === 'localhost' || $host === '127.0.0.1') {
-        $pdo = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", $username, $password);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        // On localhost: completely recreate the database to reset state
         $pdo->exec("DROP DATABASE IF EXISTS `$dbname`");
         $pdo->exec("CREATE DATABASE `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    } else {
+        // On remote server (Railway): ensure the database exists
+        $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
     }
     
+    // Connect to the target database
     $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
     $pdo = new PDO($dsn, $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
