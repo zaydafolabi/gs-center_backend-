@@ -10,6 +10,7 @@ RUN a2enmod rewrite
 RUN echo "PassEnv PORT DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD" >> /etc/apache2/apache2.conf
 
 # Copy API source files to Apache public directory
+COPY index.php /var/www/html/index.php
 COPY ./api /var/www/html/api
 
 # Set permissions

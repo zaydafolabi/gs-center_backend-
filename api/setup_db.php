@@ -33,6 +33,11 @@ try {
     $pdo = new PDO($dsn, $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
+    // Clear existing tables to ensure a clean setup and avoid duplicate seeding errors
+    $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
+    $pdo->exec("DROP TABLE IF EXISTS order_items, orders, cart, appointments, services, products, categories, users;");
+    $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
+    
     // 2. Create Users Table
     $pdo->exec("CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
